@@ -1,20 +1,30 @@
 const axios = require('axios');
+const FormData = require('form-data');
+
 
 function getToken(e_mail, password) {
   return new Promise((resolve, reject) => {
-    axios({
-      url: 'https://coursehunter.net/api/auth/login',
-      method: 'put',
-      headers: {
-        'content-type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+    const data = new FormData();
+    data.append('e_mail', 'andrey.gabchak@gmail.com');
+    data.append('password', '88b6pVRzD6fr');
+
+    const config = {
+      method: 'post',
+      url: 'https://coursehunter.net/sign-in',
+      headers: { 
+        'Cookie': 'locale=ru; subscriber_ident=26764551-d546-4ac4-8992-6bc8a8540444', 
+        ...data.getHeaders()
       },
-      data: JSON.stringify({ e_mail: e_mail, password: password }),
-    })
+      data
+    };
+    axios(config)
       .then(res => {
-        if (res.data.token) resolve(res.headers['set-cookie'][0] + '; accessToken=' + res.data.token);
+         resolve(res.headers['set-cookie'][1] + ';');
       })
-      .catch(err => reject(err));
+      .catch(err => {
+        console.log(err, 'err')
+        reject(err)
+      });
   });
 };
 

@@ -7,7 +7,7 @@ request = request.defaults({
 });
 
 const videoMaterialScriptContainerSelector =
-  ".main-content script:nth-of-type(2)";
+  ".main-content script:nth-of-type(3)";
 
 const getCourseId = ($) => {
   const lessonsScriptContainer = $(videoMaterialScriptContainerSelector);
@@ -43,7 +43,6 @@ function getVideos(url, token) {
       if (!err) {
         let $ = cheerio.load(html);
         const courseId = getCourseId($);
-
         if (!courseId) {
           console.log(
             "\nPlease check the course url or This course is only available to premium users!"
