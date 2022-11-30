@@ -49,16 +49,25 @@ function downloadAll(logger, videos, downloadFolder) {
     lessonNumbers.push(i + 1);
   }
   console.log(`Will be downloaded videos number ${lessonNumbers.join(', ')}`.blue);
-  const loopArray = function(videos) {
-    downloadOneVideo(logger, downloadFolder, videos[x], function() {
-      x++;
-      if (x < videos.length) {
-        loopArray(videos);
-      }
-    });
-  };
-  loopArray(videos);
-  return true;
+
+  const isParallelLoadingMode = process.argv.indexOf("-parallel");
+  if (isParallelLoadingMode > -1) {
+    console.log(`Total videos to load ${lessonNumbers.length}`.blue);
+    const videoRequests = videos.map(video => downloadOneVideoPromise(logger, downloadFolder, video));
+    Promise.all(videoRequests);
+    return true;
+  } else {
+    const loopArray = function (videos) {
+      downloadOneVideo(logger, downloadFolder, videos[x], function () {
+        x++;
+        if (x < videos.length) {
+          loopArray(videos);
+        }
+      });
+    };
+    loopArray(videos);
+    return true;
+  }
 }
 
 function downloadOneVideo(logger, downloadFolder, video, nextVideo) {
@@ -101,6 +110,24 @@ function downloadOneVideo(logger, downloadFolder, video, nextVideo) {
       nextVideo();
     })
     .pipe(fs.createWriteStream(`${downloadFolder}${path.sep}${videoName}.mp4`));
+}
+
+function downloadOneVideoPromise(logger, downloadFolder, video, nextVideo) {
+  let videoName = video.name.replace('Урок ', '').replace('\\', '');
+  const _progress = progress(request(encodeURI(video.url)), { throttle: 2000, delay: 1000 })
+  return new Promise((res, rej) => {
+    _progress.on('error', function(err) {
+      console.log(`${err}`.red);
+      rej(err)
+    })
+    .on('end', function() {
+      cleanLine();
+      console.log(`End download video ${videoName}`.green);
+      logger.write(`${videoName}\n`);
+      res();
+    })
+    .pipe(fs.createWriteStream(`${downloadFolder}${path.sep}${videoName}.mp4`));
+  })   
 }
 
 module.exports = downloadVideos;
